@@ -15,6 +15,7 @@
         "start": "node -r dotenv/config lib/src/index.js",
         "start:service:http": "node -r dotenv/config lib/src/runners/http_service_runner.js",
         "start:service:order_watcher": "node -r dotenv/config lib/src/runners/order_watcher_service_runner.js",
+        "test_meta_tx": "node -r dotenv/config lib/runners/test_meta_tx_runner.js",
         "lint": "tslint --project . --format stylish"
     },
     "devDependencies": {
