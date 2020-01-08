@@ -10,10 +10,12 @@ import {
 import { assetDataUtils, SupportedProvider } from '@0x/order-utils';
 import { AbiEncoder, BigNumber, decodeThrownErrorAsRevertError, RevertError } from '@0x/utils';
 import { TxData, Web3Wrapper } from '@0x/web3-wrapper';
+import * as _ from 'lodash';
 
 import { ASSET_SWAPPER_MARKET_ORDERS_OPTS, CHAIN_ID, FEE_RECIPIENT_ADDRESS } from '../config';
-import { DEFAULT_TOKEN_DECIMALS, QUOTE_ORDER_EXPIRATION_BUFFER_MS } from '../constants';
+import { DEFAULT_TOKEN_DECIMALS, QUOTE_ORDER_EXPIRATION_BUFFER_MS, ZERO } from '../constants';
 import { logger } from '../logger';
+import { TokenMetadatasForChains } from '../token_metadatas_for_networks';
 import { CalculateSwapQuoteParams, GetSwapQuoteResponse } from '../types';
 import { orderUtils } from '../utils/order_utils';
 import { findTokenDecimalsIfExists } from '../utils/token_metadata_utils';
@@ -123,6 +125,50 @@ export class SwapService {
             orders: this._cleanSignedOrderFields(orders),
         };
         return apiSwapQuote;
+    }
+
+    public async getTokenPricesAsync(): Promise<Array<{ symbol: string; price: BigNumber }>> {
+        const baseAssetSymbol = 'WETH';
+        const unitAmount = new BigNumber(1);
+        const baseAsset = TokenMetadatasForChains.find(m => m.symbol === baseAssetSymbol);
+        if (!baseAsset) {
+            throw new Error('Invalid Base Asset');
+        }
+        const takerAssetData = assetDataUtils.encodeERC20AssetData(baseAsset.tokenAddresses[CHAIN_ID]); // WETH
+        const queryAssetData = TokenMetadatasForChains.filter(m => m.symbol !== baseAssetSymbol);
+        const tokenMetadataChunks = _.chunk(queryAssetData, 30);
+        const allResults = _.flatten(
+            await Promise.all(
+                tokenMetadataChunks.map(async chunk => {
+                    const makerAssetDatas = chunk.map(m =>
+                        assetDataUtils.encodeERC20AssetData(m.tokenAddresses[CHAIN_ID]),
+                    );
+                    const amounts = chunk.map(m => Web3Wrapper.toBaseUnitAmount(unitAmount, m.decimals));
+                    return this._swapQuoter.getMultipleMarketBuySwapQuoteForAssetDataAsync(
+                        makerAssetDatas,
+                        takerAssetData,
+                        amounts,
+                        { slippagePercentage: 0 },
+                    );
+                }),
+            ),
+        );
+        const prices = allResults.map((quote, i) => {
+            if (!quote) {
+                return { symbol: queryAssetData[i].symbol, price: ZERO };
+            }
+            const buyTokenDecimals = queryAssetData[i].decimals;
+            const sellTokenDecimals = baseAsset.decimals;
+            const { makerAssetAmount, totalTakerAssetAmount } = quote.bestCaseQuoteInfo;
+            const makerAssetUnitAmount = Web3Wrapper.toUnitAmount(makerAssetAmount, buyTokenDecimals);
+            const takerAssetUnitAmount = Web3Wrapper.toUnitAmount(totalTakerAssetAmount, sellTokenDecimals);
+            const price = makerAssetUnitAmount.dividedBy(takerAssetUnitAmount).decimalPlaces(sellTokenDecimals);
+            return {
+                symbol: queryAssetData[i].symbol,
+                price,
+            };
+        });
+        return prices;
     }
 
     private async _estimateGasOrThrowRevertErrorAsync(txData: Partial<TxData>): Promise<BigNumber> {
