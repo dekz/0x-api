@@ -136,7 +136,7 @@ export class SwapService {
         }
         const takerAssetData = assetDataUtils.encodeERC20AssetData(baseAsset.tokenAddresses[CHAIN_ID]); // WETH
         const queryAssetData = TokenMetadatasForChains.filter(m => m.symbol !== baseAssetSymbol);
-        const tokenMetadataChunks = _.chunk(queryAssetData, 30);
+        const tokenMetadataChunks = _.chunk(queryAssetData, 10);
         const allResults = _.flatten(
             await Promise.all(
                 tokenMetadataChunks.map(async chunk => {
