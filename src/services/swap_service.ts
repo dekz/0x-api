@@ -18,7 +18,7 @@ import { logger } from '../logger';
 import { TokenMetadatasForChains } from '../token_metadatas_for_networks';
 import { CalculateSwapQuoteParams, GetSwapQuoteResponse } from '../types';
 import { orderUtils } from '../utils/order_utils';
-import { findTokenDecimalsIfExists } from '../utils/token_metadata_utils';
+import { findTokenDecimalsIfExists, getTokenMetadataIfExists } from '../utils/token_metadata_utils';
 
 export class SwapService {
     private readonly _provider: SupportedProvider;
@@ -48,9 +48,9 @@ export class SwapService {
             from,
         } = params;
         const assetSwapperOpts = {
+            ...ASSET_SWAPPER_MARKET_ORDERS_OPTS,
             slippagePercentage,
             gasPrice: providedGasPrice,
-            ...ASSET_SWAPPER_MARKET_ORDERS_OPTS,
         };
         if (sellAmount !== undefined) {
             swapQuote = await this._swapQuoter.getMarketSellSwapQuoteAsync(
@@ -127,32 +127,40 @@ export class SwapService {
         return apiSwapQuote;
     }
 
-    public async getTokenPricesAsync(): Promise<Array<{ symbol: string; price: BigNumber }>> {
-        const baseAssetSymbol = 'WETH';
-        const unitAmount = new BigNumber(1);
-        const baseAsset = TokenMetadatasForChains.find(m => m.symbol === baseAssetSymbol);
+    public async getTokenPricesAsync(baseAssetSymbol: string): Promise<Array<{ symbol: string; price: BigNumber }>> {
+        const baseAsset = getTokenMetadataIfExists(baseAssetSymbol, CHAIN_ID);
         if (!baseAsset) {
             throw new Error('Invalid Base Asset');
         }
-        const takerAssetData = assetDataUtils.encodeERC20AssetData(baseAsset.tokenAddresses[CHAIN_ID]); // WETH
+        const unitAmount = new BigNumber(1);
+        const takerAssetData = assetDataUtils.encodeERC20AssetData(baseAsset.tokenAddress);
         const queryAssetData = TokenMetadatasForChains.filter(m => m.symbol !== baseAssetSymbol);
-        const tokenMetadataChunks = _.chunk(queryAssetData, 10);
+        const chunkSize = 10;
+        const assetDataChunks = _.chunk(queryAssetData, chunkSize);
         const allResults = _.flatten(
             await Promise.all(
-                tokenMetadataChunks.map(async chunk => {
-                    const makerAssetDatas = chunk.map(m =>
+                assetDataChunks.map(async a => {
+                    const encodedAssetData = a.map(m =>
                         assetDataUtils.encodeERC20AssetData(m.tokenAddresses[CHAIN_ID]),
                     );
-                    const amounts = chunk.map(m => Web3Wrapper.toBaseUnitAmount(unitAmount, m.decimals));
-                    return this._swapQuoter.getMultipleMarketBuySwapQuoteForAssetDataAsync(
-                        makerAssetDatas,
+                    const amounts = a.map(m => Web3Wrapper.toBaseUnitAmount(unitAmount, m.decimals));
+                    const quotes = await this._swapQuoter.getBatchMarketBuySwapQuoteForAssetDataAsync(
+                        encodedAssetData,
                         takerAssetData,
                         amounts,
-                        { slippagePercentage: 0 },
+                        {
+                            ...ASSET_SWAPPER_MARKET_ORDERS_OPTS,
+                            slippagePercentage: 0,
+                            bridgeSlippage: 0,
+                            numSamples: 1,
+                            runLimit: 1,
+                        },
                     );
+                    return quotes;
                 }),
             ),
         );
+
         const prices = allResults.map((quote, i) => {
             if (!quote) {
                 return { symbol: queryAssetData[i].symbol, price: ZERO };
@@ -160,9 +168,11 @@ export class SwapService {
             const buyTokenDecimals = queryAssetData[i].decimals;
             const sellTokenDecimals = baseAsset.decimals;
             const { makerAssetAmount, totalTakerAssetAmount } = quote.bestCaseQuoteInfo;
-            const makerAssetUnitAmount = Web3Wrapper.toUnitAmount(makerAssetAmount, buyTokenDecimals);
-            const takerAssetUnitAmount = Web3Wrapper.toUnitAmount(totalTakerAssetAmount, sellTokenDecimals);
-            const price = makerAssetUnitAmount.dividedBy(takerAssetUnitAmount).decimalPlaces(sellTokenDecimals);
+            const unitMakerAssetAmount = Web3Wrapper.toUnitAmount(makerAssetAmount, buyTokenDecimals);
+            const unitTakerAssetAMount = Web3Wrapper.toUnitAmount(totalTakerAssetAmount, sellTokenDecimals);
+            const price = unitMakerAssetAmount
+                .dividedBy(unitTakerAssetAMount)
+                .decimalPlaces(sellTokenDecimals);
             return {
                 symbol: queryAssetData[i].symbol,
                 price,
