@@ -763,32 +763,6 @@
     ethers "~4.0.4"
     lodash "^4.17.11"
 
-"@0x/web3-wrapper@^6.1.0-beta.3":
-  version "6.1.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@0x/web3-wrapper/-/web3-wrapper-6.1.0-beta.3.tgz#82161147e9283391e0c7cd6027c971749c5a2f77"
-  dependencies:
-    "@0x/assert" "^2.2.0-beta.3"
-    "@0x/json-schemas" "^4.1.0-beta.3"
-    "@0x/typescript-typings" "^4.4.0-beta.2"
-    "@0x/utils" "^4.6.0-beta.3"
-    ethereum-types "^2.2.0-beta.2"
-    ethereumjs-util "^5.1.1"
-    ethers "~4.0.4"
-    lodash "^4.17.11"
-
-"@0x/web3-wrapper@^7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@0x/web3-wrapper/-/web3-wrapper-7.0.0.tgz#323e7931f067f7f9ed88cca30bd1ed1f7505fc48"
-  dependencies:
-    "@0x/assert" "^3.0.0"
-    "@0x/json-schemas" "^5.0.0"
-    "@0x/typescript-typings" "^5.0.0"
-    "@0x/utils" "^5.0.0"
-    ethereum-types "^3.0.0"
-    ethereumjs-util "^5.1.1"
-    ethers "~4.0.4"
-    lodash "^4.17.11"
-
 "@babel/code-frame@^7.0.0":
   version "7.5.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.5.5.tgz#bc0782f6d69f7b7d49531219699b988f669a8f9d"
@@ -1455,13 +1429,6 @@ aws-sign2@~0.7.0:
 aws4@^1.8.0:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.9.1.tgz#7e33d8f7d449b3f673cd72deb9abdc552dbe528e"
-
-axios@^0.19.0:
-  version "0.19.0"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-0.19.0.tgz#8e09bff3d9122e133f7b8101c8fbdd00ed3d2ab8"
-  dependencies:
-    follow-redirects "1.5.10"
-    is-buffer "^2.0.2"
 
 axios@^0.19.0:
   version "0.19.0"
