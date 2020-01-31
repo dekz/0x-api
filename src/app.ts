@@ -9,6 +9,7 @@ import { logger } from './logger';
 import { OrderBookServiceOrderProvider } from './order_book_service_order_provider';
 import { runHttpServiceAsync } from './runners/http_service_runner';
 import { runOrderWatcherServiceAsync } from './runners/order_watcher_service_runner';
+import { MetaTransactionService } from './services/meta_transaction_service';
 import { OrderBookService } from './services/orderbook_service';
 import { StakingDataService } from './services/staking_data_service';
 import { SwapService } from './services/swap_service';
@@ -21,6 +22,7 @@ export interface AppDependencies {
     meshClient?: WSClient;
     orderBookService: OrderBookService;
     swapService?: SwapService;
+    metaTransactionService?: MetaTransactionService;
     provider: SupportedProvider;
     websocketOpts: Partial<WebsocketSRAOpts>;
 }
@@ -57,6 +59,8 @@ export async function getDefaultAppDependenciesAsync(
         logger.error(err);
     }
 
+    const metaTransactionService =  new MetaTransactionService();
+
     const websocketOpts = { path: SRA_PATH };
 
     return {
@@ -65,6 +69,7 @@ export async function getDefaultAppDependenciesAsync(
         meshClient,
         orderBookService,
         swapService,
+        metaTransactionService,
         provider,
         websocketOpts,
     };
