@@ -1,22 +1,17 @@
 import {
     ExtensionContractType,
-    MarketBuySwapQuote,
-    MarketSellSwapQuote,
     Orderbook,
-    SignedOrder,
     SwapQuoteConsumer,
     SwapQuoter,
 } from '@0x/asset-swapper';
-import { assetDataUtils, SupportedProvider } from '@0x/order-utils';
-import { AbiEncoder, BigNumber, decodeThrownErrorAsRevertError, RevertError } from '@0x/utils';
+import { SupportedProvider } from '@0x/order-utils';
+import { BigNumber, decodeThrownErrorAsRevertError, RevertError } from '@0x/utils';
 import { TxData, Web3Wrapper } from '@0x/web3-wrapper';
 
-import { ASSET_SWAPPER_MARKET_ORDERS_OPTS, CHAIN_ID, FEE_RECIPIENT_ADDRESS } from '../config';
-import { DEFAULT_TOKEN_DECIMALS, QUOTE_ORDER_EXPIRATION_BUFFER_MS } from '../constants';
-import { logger } from '../logger';
+import { ASSET_SWAPPER_MARKET_ORDERS_OPTS, CHAIN_ID } from '../config';
+import { QUOTE_ORDER_EXPIRATION_BUFFER_MS } from '../constants';
 import { CalculateSwapQuoteParams, GetSwapQuoteResponse } from '../types';
-import { orderUtils } from '../utils/order_utils';
-import { findTokenDecimalsIfExists } from '../utils/token_metadata_utils';
+import { serviceUtils } from '../utils/service_utils';
 
 export class SwapService {
     private readonly _provider: SupportedProvider;
@@ -67,7 +62,7 @@ export class SwapService {
         } else {
             throw new Error('sellAmount or buyAmount required');
         }
-        const attributedSwapQuote = this._attributeSwapQuoteOrders(swapQuote);
+        const attributedSwapQuote = serviceUtils.attributeSwapQuoteOrders(swapQuote);
         const {
             makerAssetAmount,
             totalTakerAssetAmount,
@@ -100,8 +95,8 @@ export class SwapService {
             });
         }
 
-        const buyTokenDecimals = await this._fetchTokenDecimalsIfRequiredAsync(buyTokenAddress);
-        const sellTokenDecimals = await this._fetchTokenDecimalsIfRequiredAsync(sellTokenAddress);
+        const buyTokenDecimals = await serviceUtils.fetchTokenDecimalsIfRequiredAsync(buyTokenAddress, this._web3Wrapper);
+        const sellTokenDecimals = await serviceUtils.fetchTokenDecimalsIfRequiredAsync(sellTokenAddress, this._web3Wrapper);
         const unitMakerAssetAmount = Web3Wrapper.toUnitAmount(makerAssetAmount, buyTokenDecimals);
         const unitTakerAssetAMount = Web3Wrapper.toUnitAmount(totalTakerAssetAmount, sellTokenDecimals);
         const price =
@@ -120,7 +115,7 @@ export class SwapService {
             protocolFee,
             buyAmount: makerAssetAmount,
             sellAmount: totalTakerAssetAmount,
-            orders: this._cleanSignedOrderFields(orders),
+            orders: serviceUtils.cleanSignedOrderFields(orders),
         };
         return apiSwapQuote;
     }
@@ -135,80 +130,6 @@ export class SwapService {
         return new BigNumber(gas);
     }
 
-    // tslint:disable-next-line:prefer-function-over-method
-    private _attributeSwapQuoteOrders(
-        swapQuote: MarketSellSwapQuote | MarketBuySwapQuote,
-    ): MarketSellSwapQuote | MarketBuySwapQuote {
-        // Where possible, attribute any fills of these orders to the Fee Recipient Address
-        const attributedOrders = swapQuote.orders.map(o => {
-            try {
-                const decodedAssetData = assetDataUtils.decodeAssetDataOrThrow(o.makerAssetData);
-                if (orderUtils.isBridgeAssetData(decodedAssetData)) {
-                    return {
-                        ...o,
-                        feeRecipientAddress: FEE_RECIPIENT_ADDRESS,
-                    };
-                }
-                // tslint:disable-next-line:no-empty
-            } catch (err) {}
-            // Default to unmodified order
-            return o;
-        });
-        const attributedSwapQuote = {
-            ...swapQuote,
-            orders: attributedOrders,
-        };
-        return attributedSwapQuote;
-    }
-
-    // tslint:disable-next-line:prefer-function-over-method
-    private _cleanSignedOrderFields(orders: SignedOrder[]): SignedOrder[] {
-        return orders.map(o => ({
-            chainId: o.chainId,
-            exchangeAddress: o.exchangeAddress,
-            makerAddress: o.makerAddress,
-            takerAddress: o.takerAddress,
-            feeRecipientAddress: o.feeRecipientAddress,
-            senderAddress: o.senderAddress,
-            makerAssetAmount: o.makerAssetAmount,
-            takerAssetAmount: o.takerAssetAmount,
-            makerFee: o.makerFee,
-            takerFee: o.takerFee,
-            expirationTimeSeconds: o.expirationTimeSeconds,
-            salt: o.salt,
-            makerAssetData: o.makerAssetData,
-            takerAssetData: o.takerAssetData,
-            makerFeeAssetData: o.makerFeeAssetData,
-            takerFeeAssetData: o.takerFeeAssetData,
-            signature: o.signature,
-        }));
-    }
-    private async _fetchTokenDecimalsIfRequiredAsync(tokenAddress: string): Promise<number> {
-        // HACK(dekz): Our ERC20Wrapper does not have decimals as it is optional
-        // so we must encode this ourselves
-        let decimals = findTokenDecimalsIfExists(tokenAddress, CHAIN_ID);
-        if (!decimals) {
-            const decimalsEncoder = new AbiEncoder.Method({
-                constant: true,
-                inputs: [],
-                name: 'decimals',
-                outputs: [{ name: '', type: 'uint8' }],
-                payable: false,
-                stateMutability: 'view',
-                type: 'function',
-            });
-            const encodedCallData = decimalsEncoder.encode(tokenAddress);
-            try {
-                const result = await this._web3Wrapper.callAsync({ data: encodedCallData, to: tokenAddress });
-                decimals = decimalsEncoder.strictDecodeReturnValue<BigNumber>(result).toNumber();
-                logger.info(`Unmapped token decimals ${tokenAddress} ${decimals}`);
-            } catch (err) {
-                logger.error(`Error fetching token decimals ${tokenAddress}`);
-                decimals = DEFAULT_TOKEN_DECIMALS;
-            }
-        }
-        return decimals;
-    }
     private async _throwIfCallIsRevertErrorAsync(txData: Partial<TxData>): Promise<void> {
         let callResult;
         let revertError;
