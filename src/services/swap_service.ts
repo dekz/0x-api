@@ -150,8 +150,7 @@ export class SwapService {
                             ...ASSET_SWAPPER_MARKET_ORDERS_OPTS,
                             slippagePercentage: 0,
                             bridgeSlippage: 0,
-                            numSamples: 1,
-                            runLimit: 1,
+                            numSamples: 3,
                         },
                     );
                     return quotes;
