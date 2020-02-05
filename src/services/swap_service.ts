@@ -13,7 +13,7 @@ import { TxData, Web3Wrapper } from '@0x/web3-wrapper';
 import * as _ from 'lodash';
 
 import { ASSET_SWAPPER_MARKET_ORDERS_OPTS, CHAIN_ID, FEE_RECIPIENT_ADDRESS } from '../config';
-import { DEFAULT_TOKEN_DECIMALS, QUOTE_ORDER_EXPIRATION_BUFFER_MS, ZERO } from '../constants';
+import { DEFAULT_TOKEN_DECIMALS, QUOTE_ORDER_EXPIRATION_BUFFER_MS } from '../constants';
 import { logger } from '../logger';
 import { TokenMetadatasForChains } from '../token_metadatas_for_networks';
 import { CalculateSwapQuoteParams, GetSwapQuoteResponse, GetTokenPricesResponse, TokenMetadata } from '../types';
@@ -161,7 +161,7 @@ export class SwapService {
 
         const prices = allResults.map((quote, i) => {
             if (!quote) {
-                return { symbol: queryAssetData[i].symbol, price: ZERO };
+                return undefined;
             }
             const buyTokenDecimals = queryAssetData[i].decimals;
             const sellTokenDecimals = sellToken.decimals;
@@ -175,7 +175,7 @@ export class SwapService {
                 symbol: queryAssetData[i].symbol,
                 price,
             };
-        });
+        }).filter(p => p) as GetTokenPricesResponse;
         return prices;
     }
 
