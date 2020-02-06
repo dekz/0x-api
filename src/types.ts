@@ -309,6 +309,7 @@ export interface GetSwapQuoteRequestParams {
     slippagePercentage?: number;
     gasPrice?: BigNumber;
     excludedSources?: ERC20BridgeSource[];
+    affiliateAddress?: string;
 }
 
 export interface CalculateSwapQuoteParams {
@@ -321,4 +322,5 @@ export interface CalculateSwapQuoteParams {
     slippagePercentage?: number;
     gasPrice?: BigNumber;
     excludedSources?: ERC20BridgeSource[];
+    affiliateAddress?: string;
 }
