@@ -9,7 +9,7 @@
 - [Deployment](#deployment)
 - [Legal Disclaimer](#legal-disclaimer)
 
-## Getting started
+## Getting started  
 
 #### Pre-requirements
 
