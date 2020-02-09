@@ -1,8 +1,7 @@
 name: CD
 on:
   pull_request:
-    branches:
-    - master
+    types: [opened]
   issue_comment:
     types: [created]
 jobs:
@@ -12,7 +11,7 @@ jobs:
     - uses: khan/pull-request-comment-trigger@master
       id: check
       with:
-        trigger: '/deploy staging'
+        trigger: 'deploy staging'
     - run: 'echo Found it!'
       if: steps.check.outputs.triggered == 'true'
     - uses: actions/checkout@v2
