@@ -17,13 +17,13 @@ jobs:
       uses: peter-evans/create-pull-request@v2.3.0
       with:
           token: ${{ secrets.PAT }}
-          commit-message: "[0xApi] [staging] ${{ github.head_ref }}"
-          title: "[0xApi] [staging] ${{ github.head_ref }}"
+          commit-message: "[0xApi][staging] Deploy ${{ github.head_ref }}"
+          title: "[0xApi][staging] Deploy ${{ github.head_ref }}"
           reviewers: dekz
           labels: 0xApi, staging
           branch: "0xApi/staging/${{ github.head_ref }}"
           body: |
-            https://github.com/${{ github.repository }}/${{ github.head_ref }}
+            https://github.com/${{ github.repository }}/tree/${{ github.head_ref }}
             ${{ github.sha }}
     - name: Check outputs
       run: |
