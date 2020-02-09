@@ -11,18 +11,18 @@ jobs:
       with:
           token: ${{ secrets.PAT }}
           repository: dekz/0x-main-infra
-    - name: Run a one-line script
-      run: echo Hello, world!
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+    - name: Create report file
+      run: date +%s > report.txt
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v2.3.0
       with:
           token: ${{ secrets.PAT }}
-          commit-message: "[0xApi] [staging] $GITHUB_REF"
-          title: "[0xApi] [staging] $GITHUB_REF"
+          commit-message: "[0xApi] [staging] ${{ github.head_ref }}"
+          title: "[0xApi] [staging] ${{ github.head_ref }}"
           reviewers: dekz
           labels: 0xApi, staging
-          branch: "0xApi/staging/$GITHUB_REF"
+          branch: "0xApi/staging/${{ github.head_ref }}"
+    - name: Check outputs
+      run: |
+          echo "Pull Request Number - ${{ env.PULL_REQUEST_NUMBER }}"
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pr_number }}"
