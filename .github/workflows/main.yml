@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           repository: dekz/0x-main-infra
     - name: Run a one-line script
       run: echo Hello, world!
@@ -20,7 +20,7 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v2.3.0
       with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           commit-message: "[0xApi] [staging] ${{ env.PULL_REQUEST_NUMBER }}"
           title: "[0xApi] [staging] ${{ env.PULL_REQUEST_NUMBER }}"
           reviewers: dekz
