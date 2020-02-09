@@ -33,13 +33,14 @@ jobs:
         with:
           json: ${{ steps.get_pr_ref.outputs.data }}
           ref: "head.ref"
-      - run: "echo ${{ steps.parse_pr_info.outputs.json }}"
+          sha: "head.sha"
+      - run: "echo ${{ steps.parse_pr_info.outputs }}"
       - uses: actions/checkout@v2
         with:
             token: ${{ secrets.PAT }}
             repository: dekz/0x-main-infra
       - name: Update API
-        run: sed -i -e 's/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:.*"/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:${{ steps.parse_pr_info.outputs.ref }}"/g' env/0x-api/staging/*.yml
+        run: sed -i -e 's/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:.*"/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:${{ steps.parse_pr_info.outputs.sha }}"/g' env/0x-api/staging/*.yml
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v2.3.0
         with:
