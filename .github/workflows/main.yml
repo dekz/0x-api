@@ -1,28 +1,31 @@
 name: CD
 on:
-  pull_request:
-    branches:
-    - master
+  issue_comment:
+    types: [created, edited]
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event.comment.body == 'deploy staging'
     steps:
     - uses: actions/checkout@v2
       with:
           token: ${{ secrets.PAT }}
           repository: dekz/0x-main-infra
-    - name: Run a one-line script
-      run: echo Hello, world!
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+    - name: Update API
+      run: sed -i -e 's/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:.*"/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:${{ github.sha }}"/g' env/0x-api/staging/*.yml
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v2.3.0
       with:
           token: ${{ secrets.PAT }}
-          commit-message: "[0xApi] [staging] ${{ env.PULL_REQUEST_NUMBER }}"
-          title: "[0xApi] [staging] ${{ env.PULL_REQUEST_NUMBER }}"
+          commit-message: "[0xApi][staging] Deploy ${{ github.head_ref }}"
+          title: "[0xApi][staging] Deploy ${{ github.head_ref }}"
           reviewers: dekz
           labels: 0xApi, staging
-          branch: 0xApi/staging/${{ env.PULL_REQUEST_NUMBER }}
+          branch: "0xApi/staging/${{ github.head_ref }}"
+          body: |
+            https://github.com/${{ github.repository }}/compare/master...${{ github.head_ref }}
+            ${{ github.sha }}
+    - name: Check outputs
+      run: |
+          echo "Pull Request Number - ${{ env.PULL_REQUEST_NUMBER }}"
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pr_number }}"
