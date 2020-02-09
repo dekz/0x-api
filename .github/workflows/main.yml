@@ -11,8 +11,8 @@ jobs:
       with:
           token: ${{ secrets.PAT }}
           repository: dekz/0x-main-infra
-    - name: Create report file
-      run: echo "${{ github.sha }}" > report.txt
+    - name: Update API
+      run: sed -i -e 's/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:.*"/"883408475785\.dkr\.ecr\.us-east-1\.amazonaws\.com\/0x\/api\:${{ github.sha }}"/g' env/0x-api/staging/*.yml
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v2.3.0
       with:
