@@ -23,7 +23,7 @@ jobs:
           labels: 0xApi, staging
           branch: "0xApi/staging/${{ github.head_ref }}"
           body: |
-            https://github.com/${{ github.repository }}/tree/${{ github.head_ref }}
+            https://github.com/${{ github.repository }}/compare/master...${{ github.head_ref }}
             ${{ github.sha }}
     - name: Check outputs
       run: |
