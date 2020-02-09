@@ -1,9 +1,5 @@
 name: CD
-on:
-  pull_request:
-    types: [opened]
-  issue_comment:
-    types: [created]
+on: issue_comment
 jobs:
   build:
     runs-on: ubuntu-latest
