@@ -25,4 +25,4 @@ jobs:
           title: "[0xApi] [staging] ${{ env.PULL_REQUEST_NUMBER }}"
           reviewers: dekz
           labels: 0xApi, staging
-          branch: 0xApi/staging/${{ env.PULL_REQUEST_NUMBER }}
+          branch: "0xApi/staging/${{ env.PULL_REQUEST_NUMBER }}"
