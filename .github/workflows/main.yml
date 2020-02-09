@@ -21,8 +21,8 @@ jobs:
       uses: peter-evans/create-pull-request@v2.3.0
       with:
           token: ${{ secrets.PAT }}
-          commit-message: "[0xApi] [staging] ${{ env.PULL_REQUEST_NUMBER }}"
-          title: "[0xApi] [staging] ${{ env.PULL_REQUEST_NUMBER }}"
+          commit-message: "[0xApi] [staging] ${{ GITHUB_REF }}"
+          title: "[0xApi] [staging] ${{ GITHUB_REF }}"
           reviewers: dekz
           labels: 0xApi, staging
-          branch: "0xApi/staging/${{ env.PULL_REQUEST_NUMBER }}"
+          branch: "0xApi/staging/${{ GITHUB_REF }}"
