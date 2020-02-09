@@ -12,7 +12,7 @@ jobs:
           token: ${{ secrets.PAT }}
           repository: dekz/0x-main-infra
     - name: Create report file
-      run: date +%s > report.txt
+      run: echo "${{ github.sha }}" > report.txt
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v2.3.0
       with:
@@ -22,6 +22,9 @@ jobs:
           reviewers: dekz
           labels: 0xApi, staging
           branch: "0xApi/staging/${{ github.head_ref }}"
+          body: |
+            https://github.com/${{ github.repository }}/${{ github.head_ref }}
+            ${{ github.sha }}
     - name: Check outputs
       run: |
           echo "Pull Request Number - ${{ env.PULL_REQUEST_NUMBER }}"
