@@ -33,6 +33,7 @@ jobs:
         with:
           json: ${{ steps.get_pr_ref.outputs.data }}
           ref: "head.ref"
+      - run: "echo ${{ steps.parse_pr_info.outputs.json }}"
       - uses: actions/checkout@v2
         with:
             token: ${{ secrets.PAT }}
